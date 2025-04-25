@@ -23,7 +23,7 @@ const createTables = async () => {
         dobro_id int,
         help_hours int default 0,
         completed_tasks int default 0,
-        rating real default 0.0
+        rating varchar(50) default 0.0
     );
 
     CREATE TABLE IF NOT EXISTS Clients (
