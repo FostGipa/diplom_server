@@ -622,7 +622,7 @@ app.post('/bd/accept-request', async (req, res) => {
     }
 });
 
-async function sendNotification(title, message, player_id) {
+async function sendNotification(title, message, externalUserId) {
     const options = {
         method: 'POST',
         url: 'https://api.onesignal.com/notifications?c=push',
