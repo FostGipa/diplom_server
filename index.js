@@ -598,18 +598,23 @@ app.post('/bd/accept-request', async (req, res) => {
         const volunteer = volunteerResult.rows[0];
         const volunteerName = `${volunteer.last_name} ${volunteer.name}`;
 
-        // Получаем player_id клиента для отправки уведомления
-        const clientResult = await pool.query(
-            'SELECT id_client FROM Clients WHERE id_user = $1',
+        const userResult = await pool.query(
+            'SELECT id_user FROM Clients WHERE id_client = $1',
             [request.id_client]
-        );
+          );
+          
+          if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+          }
+          
+          const clientUserId = userResult.rows[0].id_user;
 
         // Отправляем уведомление с именем и фамилией волонтера
         await sendNotification(
             "Заявка принята!",
             `Волонтер ${volunteerName} принял вашу заявку.`,
-            1
-        );
+            clientUserId
+          );
 
         return res.status(200).json({ success: 'Заявка принята' });
     } catch (error) {
@@ -631,8 +636,7 @@ async function sendNotification(title, message, player_id) {
           app_id: '0f9bc5a7-5f0a-43c4-8227-cd50d7e47637',
           contents: {en: message},
           headings: {en: title},
-          included_segments: [ "Active Subscriptions" ],
-        //   idempotency_key: player_id
+          include_external_user_ids: [String(externalUserId)]
         }
       };
 
