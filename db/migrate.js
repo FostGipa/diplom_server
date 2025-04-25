@@ -103,3 +103,4 @@ const createTriggers = async () => {
 };
 
 createTables();
+createTriggers();
