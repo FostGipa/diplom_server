@@ -17,8 +17,7 @@ app.use(bodyParserMiddleware.json());
 const users = new Map(); 
 
 wss.on('connection', (ws, req) => {
-    const fullUrl = `https://${req.headers.host}${req.url}`;
-    const url = new URL(fullUrl);
+    const url = new URL(req.url, `ws://${req.headers.host}`);
     const userId = url.searchParams.get("userId");
 
     if (userId) {
