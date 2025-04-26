@@ -695,6 +695,7 @@ setInterval(async () => {
       const allUserIds = [id_client, ...volunteerIds];
   
       allUserIds.forEach(userId => {
+        console.log(userId)
         const client = users.get(String(userId)); // Используем твою мапу users
   
         if (client && client.readyState === WebSocket.OPEN) {
