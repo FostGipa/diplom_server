@@ -622,6 +622,48 @@ app.post('/bd/accept-request', async (req, res) => {
     }
 });
 
+app.post('/bd/update-rating', async (req, res) => {
+    const { id_volunteer, new_rating } = req.body;
+  
+    try {
+      // Проверяем, что оценка в допустимых пределах
+      const userRating = parseFloat(new_rating);
+      if (isNaN(userRating) || userRating < 1 || userRating > 5) {
+        return res.status(400).json({ error: 'Некорректная оценка. Должна быть от 1 до 5.' });
+      }
+  
+      // Получаем текущие значения рейтинга
+      const result = await pool.query(
+        'SELECT rating::FLOAT, rating_count FROM Volunteers WHERE id_volunteer = $1',
+        [id_volunteer]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Волонтёр не найден' });
+      }
+  
+      const currentRating = result.rows[0].rating;
+      const currentCount = result.rows[0].rating_count;
+  
+      // Вычисляем новый рейтинг
+      const newCount = currentCount + 1;
+      const updatedRating = ((currentRating * currentCount) + userRating) / newCount;
+  
+      // Обновляем волонтёра
+      await pool.query(
+        'UPDATE Volunteers SET rating = $1, rating_count = $2 WHERE id_volunteer = $3',
+        [updatedRating.toFixed(2), newCount, id_volunteer]
+      );
+  
+      return res.status(200).json({ success: 'Рейтинг обновлён', rating: updatedRating, rating_count: newCount });
+  
+    } catch (error) {
+      console.error('Ошибка при обновлении рейтинга:', error);
+      res.status(500).json({ error: 'Ошибка сервера' });
+    }
+  });
+  
+
 async function sendNotification(title, message, externalUserId) {
     console.log(String(externalUserId))
     const options = {
