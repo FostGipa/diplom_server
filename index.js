@@ -695,19 +695,20 @@ setInterval(async () => {
       const allUserIds = [id_client, ...volunteerIds];
   
       allUserIds.forEach(userId => {
-        websocketServer.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN && client.userId === userId) {
-            client.send(JSON.stringify({
-              action: 'task_started',
-              taskId: id_task
-            }));
+        const client = users.get(String(userId)); // Используем твою мапу users
   
-            Promise.all(allUserIds.map(userId => sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId)));
-          }
-        });
+        if (client && client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            action: 'task_started',
+            taskId: id_task
+          }));
+  
+          sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId);
+        }
       });
     });
   }, 60000); // проверяем каждую минуту
+  
   
   
 async function sendNotification(title, message, externalUserId) {
