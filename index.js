@@ -681,7 +681,7 @@ setInterval(async () => {
     const now = new Date();
   
     // Получаем задачи, которые пора начинать
-    const tasks = await db.query(`
+    const tasks = await pool.query(`
       SELECT id_task, id_client, id_volunteers, task_number
       FROM Tasks
       WHERE task_status = 'Создана'
