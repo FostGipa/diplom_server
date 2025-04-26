@@ -701,14 +701,14 @@ setInterval(async () => {
   
       allUserIds.forEach(userId => {
         const client = users.get(String(userId));
+
+        sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId);
   
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             action: 'task_started',
             taskId: id_task
           }));
-  
-          sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId);
         }
       });
     });
