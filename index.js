@@ -680,23 +680,27 @@ app.post('/bd/update-rating', async (req, res) => {
 setInterval(async () => {
     const now = new Date();
   
-    // Получаем задачи, которые пора начинать
     const tasks = await pool.query(`
-      SELECT id_task, id_client, id_volunteers, task_number
+      SELECT 
+        Tasks.id_task,
+        Tasks.task_number,
+        c.id_user AS client_user_id,
+        array_agg(v.id_user) AS volunteer_user_ids
       FROM Tasks
+      JOIN Clients c ON Tasks.id_client = c.id_client
+      LEFT JOIN Volunteers v ON v.id_volunteer = ANY(Tasks.id_volunteers)
       WHERE task_status = 'Создана'
-      AND (task_start_date || ' ' || task_start_time)::timestamp <= NOW()
+        AND (task_start_date || ' ' || task_start_time)::timestamp <= NOW()
+      GROUP BY Tasks.id_task, c.id_user
     `);
   
     tasks.rows.forEach(task => {
-      const { id_task, id_client, id_volunteers, task_number } = task;
+      const { id_task, task_number, client_user_id, volunteer_user_ids } = task;
   
-      const volunteerIds = id_volunteers; // массив INT
-      const allUserIds = [id_client, ...volunteerIds];
+      const allUserIds = [client_user_id, ...(volunteer_user_ids || [])];
   
       allUserIds.forEach(userId => {
-        console.log(userId)
-        const client = users.get(String(userId)); // Используем твою мапу users
+        const client = users.get(String(userId));
   
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
@@ -708,8 +712,7 @@ setInterval(async () => {
         }
       });
     });
-  }, 60000); // проверяем каждую минуту
-  
+  }, 60000);
   
   
 async function sendNotification(title, message, externalUserId) {
