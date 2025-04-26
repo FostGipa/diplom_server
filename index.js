@@ -676,9 +676,41 @@ app.post('/bd/update-rating', async (req, res) => {
       res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
+
+setInterval(async () => {
+    const now = new Date();
+  
+    // Получаем задачи, которые пора начинать
+    const tasks = await db.query(`
+      SELECT id_task, id_client, id_volunteers, task_number
+      FROM Tasks
+      WHERE task_status = 'Создана'
+      AND (task_start_date || ' ' || task_start_time)::timestamp <= NOW()
+    `);
+  
+    tasks.rows.forEach(task => {
+      const { id_task, id_client, id_volunteers, task_number } = task;
+  
+      const volunteerIds = id_volunteers; // массив INT
+      const allUserIds = [id_client, ...volunteerIds];
+  
+      allUserIds.forEach(userId => {
+        websocketServer.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN && client.userId === userId) {
+            client.send(JSON.stringify({
+              action: 'task_started',
+              taskId: id_task
+            }));
+  
+            Promise.all(allUserIds.map(userId => sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId)));
+          }
+        });
+      });
+    });
+  }, 60000); // проверяем каждую минуту
+  
   
 async function sendNotification(title, message, externalUserId) {
-    console.log(String(externalUserId))
     const options = {
         method: 'POST',
         url: 'https://api.onesignal.com/notifications?c=push',
