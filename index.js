@@ -701,6 +701,7 @@ setInterval(async () => {
   
       allUserIds.forEach(userId => {
         const client = users.get(String(userId));
+        console.log(userId)
 
         sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId);
   
