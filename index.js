@@ -679,7 +679,7 @@ app.post('/bd/update-rating', async (req, res) => {
     }
 });
 
-app.post('/cancel_task', async (req, res) => {
+app.post('/bd/cancel_task', async (req, res) => {
     const { taskId } = req.body;
   
     try {
