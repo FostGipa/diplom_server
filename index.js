@@ -804,7 +804,8 @@ app.post('/bd/send-message', async (req, res) => {
         userIds.forEach((connectedUserId) => {
             if (connectedUserId !== senderId) {
                 const userSocket = users.get(String(connectedUserId));
-                if (userSocket) {
+                if (userSocket && userSocket.readyState === WebSocket.OPEN) {
+                    console.log(connectedUserId)
                     userSocket.send(JSON.stringify({
                         event: "new_message",
                         taskId: taskId,
