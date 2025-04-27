@@ -728,6 +728,90 @@ app.post('/bd/cancel-task', async (req, res) => {
       return res.status(500).json({ message: 'Ошибка сервера при отмене задачи' });
     }
 });
+
+app.get('/bd/chat-messages', async (req, res) => {
+    const { taskId } = req.query;
+
+    try {
+        // Запрос к базе данных для получения всех сообщений по задаче
+        const result = await pool.query(`
+            SELECT sender_id, message_text, created_at 
+            FROM Messages 
+            WHERE id_task = $1 
+            ORDER BY created_at ASC
+        `, [taskId]);
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.post('/bd/send-message', async (req, res) => {
+    const { taskId, senderId, messageText } = req.body;
+
+    try {
+        // Добавление нового сообщения в базу данных
+        const result = await pool.query(`
+            INSERT INTO Messages (id_task, sender_id, message_text) 
+            VALUES ($1, $2, $3) 
+            RETURNING id_message, created_at
+        `, [taskId, senderId, messageText]);
+
+        const message = result.rows[0];
+
+        // Получаем id_client и id_volunteers для задачи
+        const taskData = await pool.query(`
+            SELECT id_client, id_volunteers
+            FROM Tasks
+            WHERE id_task = $1
+        `, [taskId]);
+
+        const { id_client, id_volunteers } = taskData.rows[0];
+
+        // Запросим id_user для клиента и волонтеров из таблицы Users
+        const users = await pool.query(`
+            SELECT id_user
+            FROM Users
+            WHERE id_user = $1 OR id_user = ANY($2)
+        `, [id_client, id_volunteers]);
+
+        const userIds = users.rows.map(row => row.id_user);
+
+        // Отправка уведомлений через OneSignal
+        userIds.forEach((userId) => {
+            if (userId !== senderId) {
+                sendNotification(
+                    'Новое сообщение в чате',
+                    messageText,
+                    userId
+                );
+            }
+        });
+
+        // Отправка сообщения через WebSocket всем участникам
+        userIds.forEach((connectedUserId) => {
+            if (connectedUserId !== senderId) {
+                const userSocket = users.get(connectedUserId); // Получаем сокет пользователя по его id_user
+                if (userSocket) {
+                    userSocket.send(JSON.stringify({
+                        taskId,
+                        senderId,
+                        messageText,
+                        createdAt: message.created_at
+                    }));
+                }
+            }
+        });
+
+        // Ответ клиенту
+        res.status(201).json(message);
+    } catch (error) {
+        console.error('Error sending message:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
   
 setInterval(async () => {
     const now = new Date();
