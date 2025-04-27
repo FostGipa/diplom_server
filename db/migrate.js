@@ -56,6 +56,14 @@ const createTables = async () => {
         task_coordinates VARCHAR(100),
         task_status VARCHAR(50) NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS Messages (
+        id_message SERIAL PRIMARY KEY NOT NULL,
+        id_task INT NOT NULL REFERENCES Tasks(id_task) ON DELETE CASCADE,
+        sender_id INT NOT NULL,
+        message_text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
     `;
     try {
         await pool.query(query);
