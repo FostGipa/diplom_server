@@ -771,13 +771,13 @@ app.post('/bd/send-message', async (req, res) => {
         const { id_client, id_volunteers } = taskData.rows[0];
 
         // Запросим id_user для клиента и волонтеров из таблицы Users
-        const users = await pool.query(`
+        const usersResult = await pool.query(`
             SELECT id_user
             FROM Users
             WHERE id_user = $1 OR id_user = ANY($2)
         `, [id_client, id_volunteers]);
 
-        const userIds = users.rows.map(row => row.id_user);
+        const userIds = usersResult.rows.map(row => row.id_user);
 
         // Отправка уведомлений через OneSignal
         userIds.forEach((userId) => {
