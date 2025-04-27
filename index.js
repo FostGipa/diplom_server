@@ -679,6 +679,56 @@ app.post('/bd/update-rating', async (req, res) => {
     }
 });
 
+app.post('/cancel_task', async (req, res) => {
+    const { taskId } = req.body;
+  
+    try {
+      // 1. Обновляем статус задачи
+      await pool.query(
+        'UPDATE Tasks SET task_status = $1 WHERE id_task = $2',
+        ['Отменена', taskId]
+      );
+  
+      // 2. Получаем id_volunteers из задачи
+      const taskResult = await pool.query(
+        'SELECT id_volunteers FROM Tasks WHERE id_task = $1',
+        [taskId]
+      );
+  
+      if (taskResult.rowCount === 0) {
+        return res.status(404).json({ message: 'Задача не найдена' });
+      }
+  
+      const volunteerIds = taskResult.rows[0].id_volunteers; // это id_volunteer[]
+  
+      if (!volunteerIds || volunteerIds.length === 0) {
+        return res.status(200).json({ message: 'Задача отменена (волонтёров не было)' });
+      }
+  
+      // 3. По найденным id_volunteer ищем id_user в таблице Volunteers
+      const usersResult = await pool.query(
+        'SELECT id_user FROM Volunteers WHERE id_volunteer = ANY($1)',
+        [volunteerIds]
+      );
+  
+      const userIds = usersResult.rows.map(row => row.id_user);
+  
+      if (userIds.length === 0) {
+        return res.status(200).json({ message: 'Задача отменена (пользователи не найдены)' });
+      }
+  
+      // 4. Отправляем уведомления пользователям
+      for (const userId of userIds) {
+        await sendNotification(userId, 'Задача отменена', 'Задача, на которую вы откликнулись, была отменена.');
+      }
+  
+      return res.status(200).json({ message: 'Задача отменена и уведомления отправлены' });
+    } catch (error) {
+      console.error('Ошибка при отмене задачи:', error);
+      return res.status(500).json({ message: 'Ошибка сервера при отмене задачи' });
+    }
+});
+  
 setInterval(async () => {
     const now = new Date();
   
