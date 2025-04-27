@@ -755,7 +755,7 @@ app.post('/bd/send-message', async (req, res) => {
         // Добавляем сообщение в базу данных
         const result = await pool.query(`
             INSERT INTO Messages (id_task, sender_id, message_text) 
-            VALUES ($1, $2, $3) 
+            VALUES ($1, $2, $3, $4) 
             RETURNING id_message, created_at
         `, [taskId, senderId, messageText]);
 
@@ -806,9 +806,9 @@ app.post('/bd/send-message', async (req, res) => {
                 const userSocket = users.get(String(connectedUserId));
                 if (userSocket) {
                     userSocket.send(JSON.stringify({
-                        taskId,
-                        senderId,
-                        messageText,
+                        taskId: taskId,
+                        senderId: senderId,
+                        messageText: messageText,
                         createdAt: message.created_at
                     }));
                 }
