@@ -782,13 +782,13 @@ app.post('/bd/send-message', async (req, res) => {
         // Отправка уведомлений через OneSignal
         userIds.forEach((userId) => {
             console.log(userId)
-            if (userId !== senderId) {
+        
                 sendNotification(
                     'Новое сообщение в чате',
                     messageText,
                     userId
                 );
-            }
+            
         });
 
         // Отправка сообщения через WebSocket всем участникам
