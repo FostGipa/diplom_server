@@ -802,18 +802,17 @@ app.post('/bd/send-message', async (req, res) => {
 
         // Отправляем через WebSocket
         userIds.forEach((connectedUserId) => {
-            if (connectedUserId !== senderId) {
-                const userSocket = users.get(String(connectedUserId));
-                if (userSocket && userSocket.readyState === WebSocket.OPEN) {
-                    console.log(connectedUserId)
-                    userSocket.send(JSON.stringify({
-                        event: "new_message",
-                        taskId: taskId,
-                        senderId: senderId,
-                        messageText: messageText,
-                        createdAt: message.created_at
-                    }));
-                }
+            const userSocket = users.get(String(connectedUserId));
+            if (userSocket && userSocket.readyState === WebSocket.OPEN) {
+                console.log(connectedUserId)
+                userSocket.send(JSON.stringify({
+                    event: "new_message",
+                    taskId: taskId,
+                    senderId: senderId,
+                    messageText: messageText,
+                    createdAt: message.created_at
+                }));
+                
             }
         });
 
