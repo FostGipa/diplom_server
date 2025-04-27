@@ -793,7 +793,8 @@ app.post('/bd/send-message', async (req, res) => {
         // Отправка сообщения через WebSocket всем участникам
         userIds.forEach((connectedUserId) => {
             if (connectedUserId !== senderId) {
-                const userSocket = users.get(connectedUserId); // Получаем сокет пользователя по его id_user
+                // Найдём WebSocket для каждого пользователя
+                const userSocket = usersSockets[connectedUserId]; // usersSockets - это объект, который ты должен вести для всех активных пользователей
                 if (userSocket) {
                     userSocket.send(JSON.stringify({
                         taskId,
@@ -812,6 +813,7 @@ app.post('/bd/send-message', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
   
 setInterval(async () => {
     const now = new Date();
