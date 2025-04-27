@@ -719,7 +719,7 @@ app.post('/bd/cancel-task', async (req, res) => {
   
       // 4. Отправляем уведомления пользователям
       for (const userId of userIds) {
-        await sendNotification(userId, 'Задача отменена', 'Задача, на которую вы откликнулись, была отменена.');
+        await sendNotification('Задача отменена', 'Задача, на которую вы откликнулись, была отменена.', userId);
       }
   
       return res.status(200).json({ message: 'Задача отменена и уведомления отправлены' });
