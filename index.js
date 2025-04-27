@@ -794,7 +794,7 @@ app.post('/bd/send-message', async (req, res) => {
         userIds.forEach((connectedUserId) => {
             if (connectedUserId !== senderId) {
                 // Найдём WebSocket для каждого пользователя
-                const userSocket = usersSockets[connectedUserId]; // usersSockets - это объект, который ты должен вести для всех активных пользователей
+                const userSocket = users.get(String(connectedUserId)); // usersSockets - это объект, который ты должен вести для всех активных пользователей
                 if (userSocket) {
                     userSocket.send(JSON.stringify({
                         taskId,
