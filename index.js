@@ -752,7 +752,7 @@ app.post('/bd/send-message', async (req, res) => {
     const { taskId, senderId, messageText } = req.body;
 
     try {
-        // Добавление нового сообщения в базу данных
+        // Добавляем сообщение в базу данных
         const result = await pool.query(`
             INSERT INTO Messages (id_task, sender_id, message_text) 
             VALUES ($1, $2, $3) 
@@ -770,32 +770,40 @@ app.post('/bd/send-message', async (req, res) => {
 
         const { id_client, id_volunteers } = taskData.rows[0];
 
-        // Запросим id_user для клиента и волонтеров из таблицы Users
-        const usersResult = await pool.query(`
+        // Теперь получаем id_user клиента
+        const clientUserQuery = await pool.query(`
             SELECT id_user
-            FROM Users
-            WHERE id_user = $1 OR id_user = ANY($2)
-        `, [id_client, id_volunteers]);
+            FROM Clients
+            WHERE id_client = $1
+        `, [id_client]);
+        const clientUserId = clientUserQuery.rows[0]?.id_user;
 
-        const userIds = usersResult.rows.map(row => row.id_user);
+        // Теперь получаем id_user волонтёров
+        const volunteersUserQuery = await pool.query(`
+            SELECT id_user
+            FROM Volunteers
+            WHERE id_volunteer = ANY($1)
+        `, [id_volunteers]);
+        const volunteerUserIds = volunteersUserQuery.rows.map(row => row.id_user);
 
-        // Отправка уведомлений через OneSignal
+        // Теперь соберём всех участников чата
+        const userIds = [clientUserId, ...volunteerUserIds];
+
+        // Отправляем уведомления через OneSignal
         userIds.forEach((userId) => {
-            console.log(userId)
-        
+            if (userId !== senderId) {
                 sendNotification(
                     'Новое сообщение в чате',
                     messageText,
                     userId
                 );
-            
+            }
         });
 
-        // Отправка сообщения через WebSocket всем участникам
+        // Отправляем через WebSocket
         userIds.forEach((connectedUserId) => {
             if (connectedUserId !== senderId) {
-                // Найдём WebSocket для каждого пользователя
-                const userSocket = users.get(String(connectedUserId)); // usersSockets - это объект, который ты должен вести для всех активных пользователей
+                const userSocket = users.get(String(connectedUserId));
                 if (userSocket) {
                     userSocket.send(JSON.stringify({
                         taskId,
@@ -807,14 +815,12 @@ app.post('/bd/send-message', async (req, res) => {
             }
         });
 
-        // Ответ клиенту
         res.status(201).json(message);
     } catch (error) {
         console.error('Error sending message:', error);
         res.status(500).send('Internal Server Error');
     }
 });
-
   
 setInterval(async () => {
     const now = new Date();
