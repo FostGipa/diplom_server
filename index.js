@@ -755,7 +755,7 @@ app.post('/bd/send-message', async (req, res) => {
         // Добавляем сообщение в базу данных
         const result = await pool.query(`
             INSERT INTO Messages (id_task, sender_id, message_text) 
-            VALUES ($1, $2, $3, $4) 
+            VALUES ($1, $2, $3) 
             RETURNING id_message, created_at
         `, [taskId, senderId, messageText]);
 
