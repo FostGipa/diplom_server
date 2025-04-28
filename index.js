@@ -487,6 +487,7 @@ app.get("/bd/get-task", async (req, res) => {
                 t.task_address,
                 t.task_coordinates,
                 t.task_status,
+                t.task_duration
                 c.id_client,
                 c.name AS client_name,
                 c.last_name AS client_last_name,
