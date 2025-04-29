@@ -870,7 +870,7 @@ app.post('/bd/edit-task', async (req, res) => {
       return res.status(404).json({ status: 'error', message: 'Задача не найдена' });
     }
 
-    res.json({ status: 'success', task: result.rows[0] });
+    res.status(200).json({ status: 'success', task: result.rows[0] });
   } catch (error) {
     console.error('Ошибка при обновлении задачи:', error);
     res.status(500).json({ status: 'error', message: 'Ошибка сервера' });
