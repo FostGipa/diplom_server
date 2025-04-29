@@ -823,6 +823,59 @@ app.post('/bd/send-message', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+app.post('/bd/edit-task', async (req, res) => {
+    const taskId = req.params.id;
+    const {
+        taskName,
+        taskDescription,
+        taskComment,
+        taskVolunteersCount,
+        taskStartDate,
+        taskStartTime,
+        taskAddress,
+        taskDuration
+    } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE tasks
+      SET
+        task_name = $1,
+        task_description = $2,
+        task_comment = $3,
+        task_volunteers_count = $4,
+        task_start_date = $5,
+        task_start_time = $6,
+        task_address = $7,
+        task_duration = $8
+      WHERE id = $9
+      RETURNING *;
+      `,
+      [
+        taskName,
+        taskDescription,
+        taskComment,
+        taskVolunteersCount,
+        taskStartDate,
+        taskStartTime,
+        taskAddress,
+        taskDuration,
+        taskId
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ status: 'error', message: 'Задача не найдена' });
+    }
+
+    res.json({ status: 'success', task: result.rows[0] });
+  } catch (error) {
+    console.error('Ошибка при обновлении задачи:', error);
+    res.status(500).json({ status: 'error', message: 'Ошибка сервера' });
+  }
+});
   
 setInterval(async () => {
     const now = new Date();
