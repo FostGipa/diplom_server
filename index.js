@@ -850,7 +850,7 @@ app.post('/bd/edit-task', async (req, res) => {
         task_start_time = $6,
         task_address = $7,
         task_duration = $8
-      WHERE id = $9
+      WHERE id_task = $9
       RETURNING *;
       `,
       [
