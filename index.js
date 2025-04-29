@@ -903,7 +903,7 @@ setInterval(async () => {
         const client = users.get(String(userId));
         console.log(userId)
 
-        sendNotification('Задача началась!', `Ваша задача ${task_number} уже в процессе`, userId);
+        sendNotification('Заявка началась!', `Ваша заявка ${task_number} уже в процессе`, userId);
   
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
