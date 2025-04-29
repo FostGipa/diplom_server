@@ -825,8 +825,8 @@ app.post('/bd/send-message', async (req, res) => {
 });
 
 app.post('/bd/edit-task', async (req, res) => {
-    const taskId = req.params.id;
     const {
+        taskId,
         taskName,
         taskDescription,
         taskComment,
