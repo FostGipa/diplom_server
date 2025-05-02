@@ -976,7 +976,7 @@ setInterval(async () => {
   
       if (task_status === 'Создана') {
         // Не набрано нужное количество волонтеров — уведомляем клиента
-        sendNotification('Недостаточно волонтеров', `Для заявки ${task_number} не набралось достаточно волонтеров`, client_user_id);
+        sendNotification('Недостаточно волонтеров', `Для заявки ${task_number} не набралось достаточно волонтеров`, client_user_id, 'volunteers_missing', id_task);
   
       } else if (task_status === 'Готова') {
         // Всё готово — уведомляем всех и обновляем статус
