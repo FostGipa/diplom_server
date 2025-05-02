@@ -72,19 +72,7 @@ const createTables = async () => {
         message_text TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    `;
-    try {
-        await pool.query(query);
-        console.log('✅ Таблицы созданы!');
-    } catch (error) {
-        console.error('❌ Ошибка при создании таблиц:', error);
-    } finally {
-        pool.end(); 
-    }
-};
 
-const createTriggers = async () => {
-    const query = `
     CREATE OR REPLACE FUNCTION generate_task_number()
     RETURNS TRIGGER AS $$
     DECLARE
@@ -107,17 +95,15 @@ const createTriggers = async () => {
     BEFORE INSERT ON Tasks
     FOR EACH ROW
     EXECUTE FUNCTION generate_task_number();
-
     `;
     try {
         await pool.query(query);
-        console.log('✅ Триггеры созданы!');
+        console.log('✅ Таблицы и триггеры созданы!');
     } catch (error) {
-        console.error('❌ Ошибка при создании триггеров:', error);
+        console.error('❌ Ошибка при создании таблиц:', error);
     } finally {
         pool.end(); 
     }
 };
 
 createTables();
-createTriggers();
