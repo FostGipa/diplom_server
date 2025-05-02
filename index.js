@@ -871,6 +871,16 @@ app.post('/bd/send-support-message', async (req, res) => {
             }
         });
 
+        const senderSocket = users.get(String(senderId));
+        if (senderSocket && senderSocket.readyState === WebSocket.OPEN) {
+            senderSocket.send(JSON.stringify({
+                event: "support_message",
+                senderId: senderId,
+                messageText: messageText,
+                createdAt: message.created_at
+            }));
+        }
+
         res.status(201).json(message);
     } catch (error) {
         console.error('Error sending support message:', error);
