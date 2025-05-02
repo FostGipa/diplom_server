@@ -1002,6 +1002,7 @@ setInterval(async () => {
   }, 60000);  
   
 async function sendNotification(title, message, externalUserId, action = '', taskId = '') {
+    console.log(action)
     const options = {
         method: 'POST',
         url: 'https://api.onesignal.com/notifications?c=push',
