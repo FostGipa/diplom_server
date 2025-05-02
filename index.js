@@ -978,14 +978,6 @@ setInterval(async () => {
         // Не набрано нужное количество волонтеров — уведомляем клиента
         sendNotification('Недостаточно волонтеров', `Для заявки ${task_number} не набралось достаточно волонтеров`, client_user_id);
   
-        const client = users.get(String(client_user_id));
-        if (client && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            action: 'volunteers_missing',
-            taskId: id_task
-          }));
-        }
-  
       } else if (task_status === 'Готова') {
         // Всё готово — уведомляем всех и обновляем статус
         for (const userId of allUserIds) {
