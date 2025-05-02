@@ -37,6 +37,14 @@ const createTables = async () => {
         date_of_birth varchar(50) not null
     );
 
+    CREATE TABLE IF NOT EXISTS Moderators (
+        id_moderator SERIAL PRIMARY KEY not null,
+        id_user int not null references Users(id_user),
+        last_name VARCHAR(50) NOT NULL,
+        name VARCHAR(50) NOT NULL,
+        middle_name VARCHAR(50)
+    );
+
     CREATE TABLE IF NOT EXISTS Tasks (
         id_task SERIAL PRIMARY KEY NOT NULL,
         task_number varchar(50),
@@ -59,7 +67,7 @@ const createTables = async () => {
 
     CREATE TABLE IF NOT EXISTS Messages (
         id_message SERIAL PRIMARY KEY NOT NULL,
-        id_task INT NOT NULL REFERENCES Tasks(id_task) ON DELETE CASCADE,
+        id_task INT REFERENCES Tasks(id_task) ON DELETE CASCADE,
         sender_id INT NOT NULL,
         message_text TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -103,9 +111,9 @@ const createTriggers = async () => {
     `;
     try {
         await pool.query(query);
-        console.log('✅ Таблицы созданы!');
+        console.log('✅ Триггеры созданы!');
     } catch (error) {
-        console.error('❌ Ошибка при создании таблиц:', error);
+        console.error('❌ Ошибка при создании триггеров:', error);
     } finally {
         pool.end(); 
     }

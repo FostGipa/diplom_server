@@ -730,7 +730,7 @@ app.post('/bd/cancel-task', async (req, res) => {
     }
 });
 
-app.get('/bd/chat-messages', async (req, res) => {
+app.get('/bd/get-chat-messages', async (req, res) => {
     const { taskId } = req.query;
 
     try {
@@ -820,6 +820,60 @@ app.post('/bd/send-message', async (req, res) => {
         res.status(201).json(message);
     } catch (error) {
         console.error('Error sending message:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.get('/bd/get-support-messages', async (req, res) => {
+    const { userId } = req.query;
+
+    try {
+        const result = await pool.query(`
+            SELECT sender_id, message_text, created_at 
+            FROM Messages 
+            WHERE id_task IS NULL AND sender_id = $1
+            ORDER BY created_at ASC
+        `, [userId]);
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error fetching support messages:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.post('/bd/send-support-message', async (req, res) => {
+    const { senderId, messageText } = req.body;
+
+    try {
+        const result = await pool.query(`
+            INSERT INTO Messages (sender_id, message_text) 
+            VALUES ($1, $2) 
+            RETURNING id_message, created_at
+        `, [senderId, messageText]);
+
+        const message = result.rows[0];
+
+        // Уведомление только одному модератору или всем модераторам
+        const modsQuery = await pool.query(`SELECT id_user FROM Moderators`);
+        const moderatorIds = modsQuery.rows.map(row => row.id_user);
+
+        // WebSocket
+        moderatorIds.forEach((modId) => {
+            const socket = users.get(String(modId));
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    event: "new_message",
+                    senderId: senderId,
+                    messageText: messageText,
+                    createdAt: message.created_at
+                }));
+            }
+        });
+
+        res.status(201).json(message);
+    } catch (error) {
+        console.error('Error sending support message:', error);
         res.status(500).send('Internal Server Error');
     }
 });
