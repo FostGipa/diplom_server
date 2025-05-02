@@ -578,7 +578,7 @@ app.post('/bd/accept-request', async (req, res) => {
 
         // Получаем текущее количество волонтеров в задаче
         const currentVolunteers = request.id_volunteers || [];
-        const maxVolunteers = request.max_volunteers;
+        const maxVolunteers = request.task_volunteers_count;
 
         // Проверка на дубликат
         if (currentVolunteers.includes(id_volunteers)) {
