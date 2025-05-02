@@ -1001,7 +1001,7 @@ setInterval(async () => {
     }
   }, 60000);  
   
-async function sendNotification(title, message, externalUserId) {
+async function sendNotification(title, message, externalUserId, action = '', taskId = '') {
     const options = {
         method: 'POST',
         url: 'https://api.onesignal.com/notifications?c=push',
@@ -1014,7 +1014,11 @@ async function sendNotification(title, message, externalUserId) {
           app_id: '0f9bc5a7-5f0a-43c4-8227-cd50d7e47637',
           contents: {en: message},
           headings: {en: title},
-          include_external_user_ids: [String(externalUserId)]
+          include_external_user_ids: [String(externalUserId)],
+          data: {
+            action: action,
+            taskId: taskId
+          }
         }
       };
 
