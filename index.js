@@ -576,15 +576,25 @@ app.post('/bd/accept-request', async (req, res) => {
 
         const request = requestResult.rows[0];
 
-        // Проверяем, есть ли уже назначенный волонтер
-        if (request.task_status === 'В процессе') {
-            return res.status(400).json({ error: 'Заявка уже принята волонтером' });
+        // Получаем текущее количество волонтеров в задаче
+        const currentVolunteers = request.id_volunteers || [];
+        const maxVolunteers = request.max_volunteers;
+
+        // Проверка на дубликат
+        if (currentVolunteers.includes(id_volunteers)) {
+            return res.status(400).json({ error: 'Волонтер уже принят' });
         }
 
-        // Обновляем массив волонтеров, добавляя нового волонтера
+        // Добавляем нового волонтера
+        const updatedVolunteers = [...currentVolunteers, id_volunteers];
+
+        // Определяем статус
+        const newStatus = updatedVolunteers.length >= maxVolunteers ? 'Готова' : 'Создана';
+
+        // Обновляем задачу
         await pool.query(
-            'UPDATE Tasks SET id_volunteers = array_append(id_volunteers, $1), task_status = $2 WHERE id_task = $3',
-            [id_volunteers, 'В процессе', id_task]
+            'UPDATE Tasks SET id_volunteers = $1, task_status = $2 WHERE id_task = $3',
+            [updatedVolunteers, newStatus, id_task]
         );
 
         // Получаем имя и фамилию волонтера
@@ -600,25 +610,26 @@ app.post('/bd/accept-request', async (req, res) => {
         const volunteer = volunteerResult.rows[0];
         const volunteerName = `${volunteer.last_name} ${volunteer.name}`;
 
+        // Получаем id_user клиента
         const userResult = await pool.query(
             'SELECT id_user FROM Clients WHERE id_client = $1',
             [request.id_client]
-          );
-          
-          if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
-          }
-          
-          const clientUserId = userResult.rows[0].id_user;
+        );
 
-        // Отправляем уведомление с именем и фамилией волонтера
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        const clientUserId = userResult.rows[0].id_user;
+
+        // Уведомление клиенту
         await sendNotification(
             "Заявка принята!",
-            `Волонтер ${volunteerName} принял вашу заявку.`,
+            `Волонтер ${volunteerName} присоединился к вашей заявке.`,
             clientUserId
-          );
+        );
 
-        return res.status(200).json({ success: 'Заявка принята' });
+        return res.status(200).json({ success: 'Волонтер добавлен', status: newStatus });
     } catch (error) {
         console.error('Ошибка при принятии заявки:', error);
         return res.status(500).json({ error: 'Ошибка сервера' });
@@ -948,37 +959,55 @@ setInterval(async () => {
       SELECT 
         Tasks.id_task,
         Tasks.task_number,
+        Tasks.task_status,
         c.id_user AS client_user_id,
         array_agg(v.id_user) AS volunteer_user_ids
       FROM Tasks
       JOIN Clients c ON Tasks.id_client = c.id_client
       LEFT JOIN Volunteers v ON v.id_volunteer = ANY(Tasks.id_volunteers)
-      WHERE task_status = 'Создана'
+      WHERE task_status IN ('Создана', 'Готова')
         AND (task_start_date || ' ' || task_start_time)::timestamp <= NOW()
-      GROUP BY Tasks.id_task, c.id_user
+      GROUP BY Tasks.id_task, Tasks.task_number, Tasks.task_status, c.id_user
     `);
   
-    tasks.rows.forEach(task => {
-      const { id_task, task_number, client_user_id, volunteer_user_ids } = task;
-  
+    for (const task of tasks.rows) {
+      const { id_task, task_number, task_status, client_user_id, volunteer_user_ids } = task;
       const allUserIds = [client_user_id, ...(volunteer_user_ids || [])];
   
-      allUserIds.forEach(userId => {
-        const client = users.get(String(userId));
-        console.log(userId)
-
-        sendNotification('Заявка началась!', `Ваша заявка ${task_number} уже в процессе`, userId);
+      if (task_status === 'Создана') {
+        // Не набрано нужное количество волонтеров — уведомляем клиента
+        sendNotification('Недостаточно волонтеров', `Для заявки ${task_number} не набралось достаточно волонтеров`, client_user_id);
   
+        const client = users.get(String(client_user_id));
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
-            action: 'task_started',
+            action: 'volunteers_missing',
             taskId: id_task
           }));
         }
-      });
-    });
-  }, 60000);
   
+      } else if (task_status === 'Готова') {
+        // Всё готово — уведомляем всех и обновляем статус
+        for (const userId of allUserIds) {
+          sendNotification('Заявка началась!', `Ваша заявка ${task_number} уже в процессе`, userId);
+  
+          const client = users.get(String(userId));
+          if (client && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              action: 'task_started',
+              taskId: id_task
+            }));
+          }
+        }
+  
+        // Обновляем статус на "В процессе"
+        await pool.query(
+          'UPDATE Tasks SET task_status = $1 WHERE id_task = $2',
+          ['В процессе', id_task]
+        );
+      }
+    }
+  }, 60000);  
   
 async function sendNotification(title, message, externalUserId) {
     const options = {
