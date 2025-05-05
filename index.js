@@ -955,7 +955,7 @@ app.post('/bd/edit-task', async (req, res) => {
 app.get('/bd/get-all-volunteers', async (req, res) => {
     try {
       const result = await pool.query(`
-        SELECT v.*, u.phone_number
+        SELECT v.*, u.phone_number, u.status
         FROM Volunteers v
         JOIN Users u ON u.id_user = v.id_user
         WHERE u.role = 'Волонтер'
@@ -970,7 +970,7 @@ app.get('/bd/get-all-volunteers', async (req, res) => {
 app.get('/bd/get-all-clients', async (req, res) => {
 try {
     const result = await pool.query(`
-    SELECT c.*, u.phone_number
+    SELECT c.*, u.phone_number, u.status
     FROM Clients c
     JOIN Users u ON u.id_user = c.id_user
     WHERE u.role = 'Клиент'
