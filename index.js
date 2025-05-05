@@ -951,6 +951,36 @@ app.post('/bd/edit-task', async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Ошибка сервера' });
   }
 });
+
+app.get('/bd/get-all-volunteers', async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT v.*, u.phone_number
+        FROM Volunteers v
+        JOIN Users u ON u.id_user = v.id_user
+        WHERE u.role = 'Волонтер'
+      `);
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Ошибка при получении волонтёров:', error);
+      res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+  
+app.get('/bd/get-all-clients', async (req, res) => {
+try {
+    const result = await pool.query(`
+    SELECT c.*, u.phone_number
+    FROM Clients c
+    JOIN Users u ON u.id_user = c.id_user
+    WHERE u.role = 'Клиент'
+    `);
+    res.json(result.rows);
+} catch (error) {
+    console.error('Ошибка при получении клиентов:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+}
+});
   
 setInterval(async () => {
     const now = new Date();
