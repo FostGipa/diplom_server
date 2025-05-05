@@ -981,6 +981,19 @@ try {
     res.status(500).json({ message: 'Ошибка сервера' });
 }
 });
+
+app.post('/bd/block-user', async (req, res) => {
+    const { id_user } = req.body;
+    await pool.query('UPDATE Users SET status = $1 WHERE id_user = $2', ['blocked', id_user]);
+    res.status(200);
+});
+  
+  // /bd/unblock-user
+app.post('/bd/unblock-user', async (req, res) => {
+    const { id_user } = req.body;
+    await pool.query('UPDATE Users SET status = $1 WHERE id_user = $2', ['active', id_user]);
+    res.status(200);
+});
   
 setInterval(async () => {
     const now = new Date();
