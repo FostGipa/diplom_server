@@ -836,7 +836,7 @@ app.post('/bd/send-message', async (req, res) => {
 });
 
 app.get('/bd/get-support-messages', async (req, res) => {
-    const { userId, receiverId  } = req.body;
+    const { userId, receiverId  } = req.query;
 
     try {
         const result = await pool.query(`
