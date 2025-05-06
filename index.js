@@ -854,12 +854,12 @@ app.get('/bd/get-support-messages', async (req, res) => {
 });
 
 app.post('/bd/send-support-message', async (req, res) => {
-    const { senderId, messageText } = req.body;
+    const { senderId, messageText, receiver_id  } = req.body;
 
     try {
         const result = await pool.query(`
-            INSERT INTO Messages (sender_id, message_text) 
-            VALUES ($1, $2) 
+            INSERT INTO Messages (sender_id, message_text, receiver_id ) 
+            VALUES ($1, $2, $3) 
             RETURNING id_message, created_at
         `, [senderId, messageText]);
 
