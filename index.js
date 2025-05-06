@@ -996,6 +996,30 @@ app.post('/bd/unblock-user', async (req, res) => {
     await pool.query('UPDATE Users SET status = $1 WHERE id_user = $2', ['Активный', id_user]);
     res.status(200);
 });
+
+app.get('/bd/get-support-tickets', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT DISTINCT 
+                CASE 
+                    WHEN sender_id IS NOT NULL AND receiver_id IS NULL THEN sender_id
+                    WHEN receiver_id IS NOT NULL THEN receiver_id
+                END AS user_id
+            FROM Messages
+            WHERE id_task IS NULL
+              AND (
+                  (receiver_id IS NULL AND sender_id IS NOT NULL) OR
+                  (receiver_id IS NOT NULL)
+              )
+        `);
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error fetching support tickets:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
   
 setInterval(async () => {
     const now = new Date();
