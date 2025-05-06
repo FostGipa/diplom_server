@@ -836,15 +836,15 @@ app.post('/bd/send-message', async (req, res) => {
 });
 
 app.get('/bd/get-support-messages', async (req, res) => {
-    const { userId } = req.query;
+    const { userId, receiverId  } = req.query;
 
     try {
         const result = await pool.query(`
             SELECT sender_id, message_text, created_at 
             FROM Messages 
-            WHERE id_task IS NULL AND sender_id = $1
+            WHERE id_task IS NULL AND sender_id = $1 AND receiver_id = $2
             ORDER BY created_at ASC
-        `, [userId]);
+        `, [userId, receiverId]);
 
         res.status(200).json(result.rows);
     } catch (error) {
