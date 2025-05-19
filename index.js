@@ -108,15 +108,12 @@ app.post('/bd/complete-task', async (req, res) => {
 // Отправка кода
 app.post('/service/send-otp', async (req, res) => {
     const { phone } = req.body;
-
     if (!phone) {
         return res.status(400).json({ error: "Не указан номер телефона" });
     }
-
     const otp = Math.floor(1000 + Math.random() * 9000);
     const message = `Ваш код подтверждения: ${otp}`;
     const chatId = `${phone}@c.us`;
-
     try {
         const response = await axios.post(
             `https://1103.api.green-api.com/waInstance1103187335/sendMessage/8fba3cdae2864c3a92d075de44562b9d7c075cae35c9486086`,
@@ -125,9 +122,7 @@ app.post('/service/send-otp', async (req, res) => {
                 message: message
             }
         );
-
         console.log("OTP отправлен:", response.data);
-
         return res.status(200).json({ otp }); // Возвращаем OTP клиенту
     } catch (error) {
         console.error('Ошибка при отправке OTP:', error.response ? error.response.data : error.message);
@@ -228,7 +223,6 @@ app.post("/bd/check-user", async (req, res) => {
 // Добавление нового клиента
 app.post('/bd/new-client', async (req, res) => {
     const { phone_number, last_name, name, middle_name, gender, date_of_birth } = req.body;
-    
     try {
         const role = 'Клиент'
         // Добавляем пользователя в таблицу Users
@@ -236,16 +230,14 @@ app.post('/bd/new-client', async (req, res) => {
             'INSERT INTO Users (phone_number, role) VALUES ($1, $2) RETURNING id_user',
             [phone_number, role]
         );
-        
+
         const id_user = userResult.rows[0].id_user;
-        
         // Добавляем волонтера в таблицу Clients
         await pool.query(
             `INSERT INTO Clients (id_user, last_name, name, middle_name, gender, date_of_birth)
              VALUES ($1, $2, $3, $4, $5, $6)`,
             [id_user, last_name, name, middle_name, gender, date_of_birth]
         );
-        
         return res.status(200).json({ success: "Клиент добавлен" });
     } catch (error) {
         console.error('Ошибка при добавлении клиента:', error);
@@ -1020,38 +1012,25 @@ app.get('/bd/get-support-tickets', async (req, res) => {
     }
 });
 
-  
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 setInterval(async () => {
-    const now = new Date();
-  
     const tasks = await pool.query(`
-      SELECT 
-        Tasks.id_task,
-        Tasks.task_number,
-        Tasks.task_status,
-        c.id_user AS client_user_id,
-        array_agg(v.id_user) AS volunteer_user_ids
+      SELECT Tasks.id_task,Tasks.task_number,Tasks.task_status,c.id_user AS client_user_id,array_agg(v.id_user) AS volunteer_user_ids
       FROM Tasks
       JOIN Clients c ON Tasks.id_client = c.id_client
       LEFT JOIN Volunteers v ON v.id_volunteer = ANY(Tasks.id_volunteers)
-      WHERE task_status IN ('Создана', 'Готова')
-        AND (task_start_date || ' ' || task_start_time)::timestamp <= NOW()
+      WHERE task_status IN ('Создана', 'Готова') AND (task_start_date || ' ' || task_start_time)::timestamp <= NOW()
       GROUP BY Tasks.id_task, Tasks.task_number, Tasks.task_status, c.id_user
     `);
-  
     for (const task of tasks.rows) {
       const { id_task, task_number, task_status, client_user_id, volunteer_user_ids } = task;
       const allUserIds = [client_user_id, ...(volunteer_user_ids || [])];
-  
       if (task_status === 'Создана') {
-        // Не набрано нужное количество волонтеров — уведомляем клиента
         sendNotification('Недостаточно волонтеров', `Для заявки ${task_number} не набралось достаточно волонтеров`, client_user_id, 'volunteers_missing', id_task);
-  
       } else if (task_status === 'Готова') {
-        // Всё готово — уведомляем всех и обновляем статус
         for (const userId of allUserIds) {
           sendNotification('Заявка началась!', `Ваша заявка ${task_number} уже в процессе`, userId);
-  
           const client = users.get(String(userId));
           if (client && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
@@ -1060,8 +1039,6 @@ setInterval(async () => {
             }));
           }
         }
-  
-        // Обновляем статус на "В процессе"
         await pool.query(
           'UPDATE Tasks SET task_status = $1 WHERE id_task = $2',
           ['В процессе', id_task]
@@ -1088,12 +1065,7 @@ async function sendNotification(title, message, externalUserId, action = '', tas
           data: {
             action: action,
             taskId: taskId
-          }
-        }
-      };
-
-      console.log("Сообщение отправлено")
-      
+    }}};
       axios
         .request(options)
         .then(res => console.log(res.data))
