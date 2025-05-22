@@ -1012,8 +1012,6 @@ app.get('/bd/get-support-tickets', async (req, res) => {
     }
 });
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
 setInterval(async () => {
     const tasks = await pool.query(`
       SELECT Tasks.id_task,Tasks.task_number,Tasks.task_status,c.id_user AS client_user_id,array_agg(v.id_user) AS volunteer_user_ids
