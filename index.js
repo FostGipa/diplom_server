@@ -1046,29 +1046,39 @@ setInterval(async () => {
   }, 60000);  
   
 async function sendNotification(title, message, externalUserId, action = '', taskId = '') {
-    console.log(action)
-    console.log(externalUserId)
-    const options = {
-        method: 'POST',
-        url: 'https://api.onesignal.com/notifications?c=push',
-        headers: {
-          accept: 'application/json',
-          Authorization: 'Key os_v2_app_b6n4lj27bjb4jarhzvinpzdwg6nyf2itesyel2uuxy5kdc4ihgsi2ve7ns7cxpixgqcbfsbd6qho3z4p5gfxl2pffnjcg3abbeedpci',
-          'content-type': 'application/json'
-        },
-        data: {
-          app_id: '0f9bc5a7-5f0a-43c4-8227-cd50d7e47637',
-          contents: {en: message},
-          headings: {en: title},
-          include_external_user_ids: [String(externalUserId)],
-          data: {
-            action: action,
-            taskId: taskId
-    }}};
-      axios
-        .request(options)
-        .then(res => console.log(res.data))
-        .catch(err => console.error(err));
+  const exists = await pool.query(
+    'SELECT 1 FROM sent_notifications WHERE external_user_id = $1 AND action = $2 AND task_id = $3',
+    [externalUserId, action, taskId]
+  );
+  if (exists.rowCount > 0) return;
+
+  const options = {
+    method: 'POST',
+    url: 'https://api.onesignal.com/notifications',
+    headers: {
+      accept: 'application/json',
+      Authorization: 'Key os_v2_app_...',
+      'content-type': 'application/json'
+    },
+    data: {
+      app_id: '0f9bc5a7-5f0a-43c4-8227-cd50d7e47637',
+      contents: { en: message },
+      headings: { en: title },
+      include_external_user_ids: [String(externalUserId)],
+      data: { action, taskId }
+    }
+  };
+
+  try {
+    const res = await axios.request(options);
+    console.log(`✅ Notification sent to ${externalUserId}`);
+    await pool.query(
+      'INSERT INTO sent_notifications (external_user_id, action, task_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+      [externalUserId, action, taskId]
+    );
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 server.listen(port, () => {
