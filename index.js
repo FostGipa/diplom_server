@@ -1054,10 +1054,10 @@ async function sendNotification(title, message, externalUserId, action = '', tas
 
   const options = {
     method: 'POST',
-    url: 'https://api.onesignal.com/notifications',
+    url: 'https://api.onesignal.com/notifications?c=push',
     headers: {
       accept: 'application/json',
-      Authorization: 'Key os_v2_app_...',
+      Authorization: 'Key os_v2_app_b6n4lj27bjb4jarhzvinpzdwg6nyf2itesyel2uuxy5kdc4ihgsi2ve7ns7cxpixgqcbfsbd6qho3z4p5gfxl2pffnjcg3abbeedpci',
       'content-type': 'application/json'
     },
     data: {
