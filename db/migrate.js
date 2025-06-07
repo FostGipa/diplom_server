@@ -6,7 +6,7 @@ const createTables = async () => {
         id_user SERIAL PRIMARY KEY not null,
         phone_number VARCHAR(50) NOT NULL,
         role varchar(10) not null,
-        player_id varchar(50),
+        status varchar(50),
         created_at TIMESTAMP DEFAULT NOW()
     );
 
