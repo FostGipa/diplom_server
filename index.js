@@ -613,16 +613,12 @@ app.post('/bd/accept-request', async (req, res) => {
         }
 
         const clientUserId = userResult.rows[0].id_user;
-        console.log('id_task:', id_task);
-        console.log('id_volunteers:', id_volunteers);
-        console.log('updatedVolunteers:', updatedVolunteers);
-        console.log('clientUserId:', clientUserId);
-        // Уведомление клиенту
         await sendNotification(
             "Заявка принята!",
             `Волонтер ${volunteerName} присоединился к вашей заявке.`,
             clientUserId,
-            '',''
+            null,
+            null
         );
 
         return res.status(200).json({ success: 'Волонтер добавлен', status: newStatus });
