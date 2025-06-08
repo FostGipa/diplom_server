@@ -618,7 +618,8 @@ app.post('/bd/accept-request', async (req, res) => {
         await sendNotification(
             "Заявка принята!",
             `Волонтер ${volunteerName} присоединился к вашей заявке.`,
-            clientUserId
+            clientUserId,
+            '',''
         );
 
         return res.status(200).json({ success: 'Волонтер добавлен', status: newStatus });
