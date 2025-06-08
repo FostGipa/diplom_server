@@ -613,7 +613,10 @@ app.post('/bd/accept-request', async (req, res) => {
         }
 
         const clientUserId = userResult.rows[0].id_user;
-
+        console.log('id_task:', id_task);
+        console.log('id_volunteers:', id_volunteers);
+        console.log('updatedVolunteers:', updatedVolunteers);
+        console.log('clientUserId:', clientUserId);
         // Уведомление клиенту
         await sendNotification(
             "Заявка принята!",
