@@ -1012,6 +1012,47 @@ app.get('/bd/get-support-tickets', async (req, res) => {
     }
 });
 
+app.post('/bd/cancel-task-volunteer', async (req, res) => {
+  const { taskId, volunteerId } = req.body;
+
+  try {
+    // 1. Получаем текущий список волонтёров
+    const taskResult = await pool.query(
+      'SELECT id_volunteers, task_status FROM Tasks WHERE id_task = $1',
+      [taskId]
+    );
+
+    if (taskResult.rowCount === 0) {
+      return res.status(404).json({ message: 'Задача не найдена' });
+    }
+
+    const { id_volunteers, task_status } = taskResult.rows[0];
+
+    if (!id_volunteers.includes(volunteerId)) {
+      return res.status(400).json({ message: 'Волонтёр не записан в эту задачу' });
+    }
+
+    // 2. Удаляем волонтёра из массива
+    const updatedVolunteers = id_volunteers.filter(id => id !== volunteerId);
+
+    // 3. Обновляем массив волонтёров и статус, если задача теперь без волонтёров
+    const newStatus = updatedVolunteers.length === 0 ? 'Создана' : task_status;
+
+    await pool.query(
+      'UPDATE Tasks SET id_volunteers = $1, task_status = $2 WHERE id_task = $3',
+      [updatedVolunteers, newStatus, taskId]
+    );
+
+    return res.status(200).json({
+      message: 'Волонтёр успешно удалён из задачи',
+      task_status: newStatus
+    });
+  } catch (error) {
+    console.error('Ошибка при отмене волонтёром:', error);
+    return res.status(500).json({ message: 'Ошибка сервера при отмене' });
+  }
+});
+
 setInterval(async () => {
     const tasks = await pool.query(`
       SELECT Tasks.id_task,Tasks.task_number,Tasks.task_status,c.id_user AS client_user_id,array_agg(v.id_user) AS volunteer_user_ids
