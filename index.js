@@ -492,7 +492,10 @@ app.get("/bd/get-task", async (req, res) => {
                     'last_name', v.last_name,
                     'middle_name', v.middle_name,
                     'phone_number', u_volunteer.phone_number,
-                    'dobro_id', dobro_id
+                    'dobro_id', dobro_id,
+                    'rating', rating,
+                    'help_hours', help_hours,
+                    'completed_tasks', completed_tasks
                 )) AS volunteers
             FROM Tasks t
             JOIN Clients c ON t.id_client = c.id_client
