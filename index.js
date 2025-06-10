@@ -724,7 +724,7 @@ app.post('/bd/update-client-rating', async (req, res) => {
       return res.status(404).json({ error: 'Клиент не найден' });
     }
 
-    const currentRating = clientResult.rows[0].rating;
+    const currentRating = clientResult.rows[0].client_rating;
     const currentCount = clientResult.rows[0].rating_count;
 
     const newCount = currentCount + 1;
