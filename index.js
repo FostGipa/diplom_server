@@ -716,7 +716,7 @@ app.post('/bd/update-client-rating', async (req, res) => {
 
     // Получаем текущий рейтинг клиента
     const clientResult = await pool.query(
-      'SELECT rating::FLOAT, rating_count FROM Clients WHERE id_client = $1',
+      'SELECT client_rating::FLOAT, rating_count FROM Clients WHERE id_client = $1',
       [id_client]
     );
 
@@ -732,7 +732,7 @@ app.post('/bd/update-client-rating', async (req, res) => {
 
     // Обновляем рейтинг клиента
     await pool.query(
-      'UPDATE Clients SET rating = $1, rating_count = $2 WHERE id_client = $3',
+      'UPDATE Clients SET client_rating = $1, rating_count = $2 WHERE id_client = $3',
       [updatedRating.toFixed(2), newCount, id_client]
     );
 
