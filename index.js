@@ -485,6 +485,7 @@ app.get("/bd/get-task", async (req, res) => {
                 c.last_name AS client_last_name,
                 c.middle_name AS client_middle_name,
                 c.date_of_birth as client_date_of_birth,
+                c.rating as client_rating,
                 u_client.phone_number AS client_phone,
                 json_agg(json_build_object(
                     'id_volunteer', v.id_volunteer,
