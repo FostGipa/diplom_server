@@ -858,7 +858,7 @@ app.post('/bd/send-support-message', async (req, res) => {
             INSERT INTO Messages (sender_id, message_text, receiver_id ) 
             VALUES ($1, $2, $3) 
             RETURNING id_message, created_at
-        `, [senderId, messageText]);
+        `, [senderId, messageText, receiver_id]);
 
         const message = result.rows[0];
 
