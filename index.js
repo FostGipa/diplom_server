@@ -688,6 +688,62 @@ app.post('/bd/update-rating', async (req, res) => {
     }
 });
 
+app.post('/bd/update-client-rating', async (req, res) => {
+  const { id_task, new_rating } = req.body;
+
+  try {
+    // Проверяем правильность оценки
+    const userRating = parseFloat(new_rating);
+    if (isNaN(userRating) || userRating < 1 || userRating > 5) {
+      return res.status(400).json({ error: 'Некорректная оценка. Должна быть от 1 до 5.' });
+    }
+
+    // Получаем id клиента по задаче
+    const taskResult = await pool.query(
+      'SELECT id_client FROM Tasks WHERE id_task = $1',
+      [id_task]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Задача не найдена' });
+    }
+
+    const id_client = taskResult.rows[0].id_client;
+
+    if (!id_client) {
+      return res.status(400).json({ error: 'У задачи не указан клиент' });
+    }
+
+    // Получаем текущий рейтинг клиента
+    const clientResult = await pool.query(
+      'SELECT rating::FLOAT, rating_count FROM Clients WHERE id_client = $1',
+      [id_client]
+    );
+
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Клиент не найден' });
+    }
+
+    const currentRating = clientResult.rows[0].rating;
+    const currentCount = clientResult.rows[0].rating_count;
+
+    const newCount = currentCount + 1;
+    const updatedRating = ((currentRating * currentCount) + userRating) / newCount;
+
+    // Обновляем рейтинг клиента
+    await pool.query(
+      'UPDATE Clients SET rating = $1, rating_count = $2 WHERE id_client = $3',
+      [updatedRating.toFixed(2), newCount, id_client]
+    );
+
+    return res.status(200).json({ success: 'Рейтинг клиента обновлён' });
+
+  } catch (error) {
+    console.error('Ошибка при обновлении рейтинга клиента:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
 app.post('/bd/cancel-task', async (req, res) => {
     const { taskId } = req.body;
   
