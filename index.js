@@ -349,7 +349,7 @@ app.get("/bd/get-client", async (req, res) => {
       }
   
       const clientResult = await pool.query(`
-        SELECT id_client, Clients.id_user, last_name, "name", middle_name, gender, phone_number, rating FROM Clients 
+        SELECT id_client, Clients.id_user, last_name, "name", middle_name, gender, phone_number, client_rating FROM Clients 
         JOIN Users ON Clients.id_user = Users.id_user
         WHERE Clients.id_user = $1
         `, [id_user]);
